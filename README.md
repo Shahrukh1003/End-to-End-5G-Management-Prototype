@@ -1,151 +1,274 @@
-# 🚀 5G Core Management System
+# 🚀 End-to-End 5G Core Management Prototype
 
-A modern, feature-rich 5G Core Network Management System with RESTCONF/NETCONF protocol support, real-time monitoring, and comprehensive subscriber management.
+A comprehensive 5G Core Network Management System with RESTCONF API support, real-time monitoring with Prometheus & Grafana, and an intuitive web-based dashboard for network function management.
 
 ## 🎯 Features
 
-- ✅ RESTCONF API (RFC 8040 compliant)
-- ✅ NETCONF server (RFC 6241)
-- ✅ YANG data models for 5G network functions
-- ✅ Real-time dashboard for AMF, SMF, UPF monitoring
-- ✅ Subscriber (UE) management
-- ✅ PDU session tracking
-- ✅ Docker-based microservices architecture
-- ✅ Subscriber automation (JSON batch, CSV import/export)
+- ✅ **RESTCONF API** - RFC 8040 compliant REST interface for 5G core management
+- ✅ **Network Function Monitoring** - Real-time AMF, SMF, UPF status and metrics
+- ✅ **Subscriber Management** - Complete UE registration, authentication, and lifecycle management
+- ✅ **Network Slicing** - Configure and manage network slices with QoS policies
+- ✅ **Prometheus Integration** - Metrics collection and time-series monitoring
+- ✅ **Grafana Dashboards** - Pre-configured visualization dashboards for 5G Core metrics
+- ✅ **Docker Support** - Containerized deployment with Docker Compose
+- ✅ **Modern Web Dashboard** - 7-tab interface for comprehensive network management
 
 ## 🏗️ Architecture
+
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│   React     │────▶│   Flask      │────▶│  Open5GS    │
-│  Dashboard  │     │NETCONF/REST  │     │    Core     │
-└─────────────┘     └──────────────┘     └─────────────┘
-                           │                     │
-                           ▼                     ▼
-                    ┌──────────────┐     ┌─────────────┐
-                    │   NETCONF    │     │   MongoDB   │
-                    │   Server     │     │             │
-                    └──────────────┘     └─────────────┘
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐
+│   Web Dashboard │────▶│  Flask Backend   │────▶│  MongoDB    │
+│   (HTML/JS)     │     │  RESTCONF API    │     │  (Optional) │
+└─────────────────┘     └──────────────────┘     └─────────────┘
+                               │
+                               │ /metrics
+                               ▼
+                        ┌──────────────┐
+                        │  Prometheus  │
+                        │   (Metrics)  │
+                        └──────────────┘
+                               │
+                               ▼
+                        ┌──────────────┐
+                        │   Grafana    │
+                        │ (Dashboards) │
+                        └──────────────┘
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker & Docker Compose
-- Node.js 18+ (for development)
-- Python 3.11+ (for development)
+- **Python 3.11+** (for backend)
+- **Docker Desktop** (for Prometheus & Grafana monitoring)
+- Modern web browser
 
-### Installation
+### Option 1: Run Backend Only (Quick Demo)
 
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/5g-core-management-system.git
-cd 5g-core-management-system
+git clone https://github.com/Shahrukh1003/End-to-End-5G-Management-Prototype.git
+cd End-to-End-5G-Management-Prototype/backend
 ```
 
-2. Start all services:
+2. **Install dependencies:**
 ```bash
-docker-compose up -d
+pip install -r requirements.txt
 ```
 
-3. Access services:
-- **Dashboard**: http://localhost:3001
-- **RESTCONF API**: http://localhost:5000/restconf
-- **Backend API**: http://localhost:5000/api
-- **Open5GS WebUI**: http://localhost:3000
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3002 (default credentials: `admin`/`admin`)
+3. **Start the backend:**
+```bash
+python app.py
+```
 
-## 📊 Monitoring & Alerts
+4. **Open the dashboard:**
+   - Open `dashboard.html` in your browser
+   - Backend API: http://localhost:5000
 
-- The backend exposes Prometheus metrics at `http://localhost:5000/metrics` and recent alerts at `http://localhost:5000/api/alerts`.
-- `docker-compose.yml` now deploys Prometheus + Grafana; dashboards can be built against the `netconf-backend` scrape job.
-- Built-in SLA checks raise alert events (visible in the UI and `/api/alerts`). Configure thresholds through environment variables:
+### Option 2: Full Stack with Monitoring (Docker)
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `SLA_TARGET` | `99.0` | Minimum acceptable SLA percentage |
-| `LATENCY_THRESHOLD_MS` | `150` | Trigger alert when estimated RESTCONF latency exceeds this |
-| `LOAD_THRESHOLD_PERCENT` | `80` | Trigger alert when AMF/SMF load crosses this value |
-| `ALERT_COOLDOWN_SECONDS` | `120` | Minimum time between repeated alerts of the same type |
-| `ALERT_WEBHOOK_URL` | _(unset)_ | Optional HTTP webhook to forward alert payloads (e.g., Slack/MS Teams) |
+1. **Start Docker Desktop** (ensure it's running)
 
-Set `ALERT_WEBHOOK_URL` in a `.env` file (or host environment) before running `docker compose up` to enable outbound notifications.
+2. **Clone and navigate:**
+```bash
+git clone https://github.com/Shahrukh1003/End-to-End-5G-Management-Prototype.git
+cd End-to-End-5G-Management-Prototype
+```
 
-## 🤖 Subscriber Automation
+3. **Start monitoring stack:**
+```bash
+docker-compose -f docker-compose-monitoring.yml up -d
+```
 
-- Use the **Automation** tab in the dashboard (http://localhost:3001) to:
-  - Batch provision subscribers by pasting JSON arrays
-  - Import/export CSV files (`imsi, msisdn, k, opc, amf, dnn`)
-  - Bulk delete IMSIs and trigger immediate subscriber sync
-- Backend helper endpoints:
-  - `GET  /api/subscribers` – simplified inventory listing for the UI
-  - `POST /api/subscribers/batch` – create/update multiple subscribers (JSON payload)
-  - `POST /api/subscribers/import` – CSV upload (`multipart/form-data`)
-  - `GET  /api/subscribers/export` – download the current inventory as CSV
-  - `POST /api/subscribers/batch-delete` – remove subscribers by IMSI list
+4. **Start backend:**
+```bash
+cd backend
+python app.py
+```
 
-## 📡 API Examples
+5. **Access services:**
+   - **Dashboard**: Open `dashboard.html` in browser
+   - **Backend API**: http://localhost:5000
+   - **Prometheus**: http://localhost:9090
+   - **Grafana**: http://localhost:3002 (credentials: `admin`/`admin`)
 
-### Get AMF Configuration
+## 📊 Monitoring & Metrics
+
+### Prometheus Metrics
+The backend exposes comprehensive metrics at `http://localhost:5000/metrics`:
+
+- **`restconf_requests_total`** - Total API requests by endpoint and method
+- **`restconf_request_latency_seconds`** - Request latency histogram
+- **`nf_status`** - Network function status (1=active, 0=down)
+- **`nf_load_percent`** - Network function load percentage
+- **`nf_sessions_total`** - Active sessions per network function
+- **`registered_ues_total`** - Total registered user equipment
+- **`upf_throughput_mbps`** - UPF throughput in Mbps
+- **`upf_packets_total`** - Total packets processed by UPF
+
+### Grafana Dashboard Setup
+
+1. **Access Grafana**: http://localhost:3002 (login: `admin`/`admin`)
+
+2. **Add Prometheus Data Source:**
+   - Go to Connections → Data Sources → Add data source
+   - Select "Prometheus"
+   - URL: `http://prometheus:9090`
+   - Click "Save & Test"
+
+3. **Import Pre-configured Dashboard:**
+   - Go to Dashboards → New → Import
+   - Upload file: `monitoring/grafana-dashboard.json`
+   - Select Prometheus data source
+   - Click "Import"
+
+4. **View Real-time Metrics:**
+   - Network Functions Status (AMF, SMF, UPF)
+   - Registered UEs count
+   - API Request Rate & Latency
+   - UPF Throughput & Packet Count
+   - Network Function Load & Sessions
+
+For detailed setup instructions, see [GRAFANA_SETUP.md](GRAFANA_SETUP.md)
+
+## 📱 Dashboard Features
+
+The web dashboard provides 7 comprehensive tabs:
+
+1. **Network Functions** - Monitor AMF, SMF, UPF status and performance
+2. **Subscriber Management** - Register, view, and manage UE subscribers
+3. **Network Slicing** - Configure network slices with custom parameters
+4. **QoS Policies** - Define and manage Quality of Service policies
+5. **Monitoring** - Real-time metrics and performance graphs
+6. **Alarms** - View and manage system alerts and notifications
+7. **Configuration** - System settings and network function configuration
+
+## 📡 RESTCONF API Examples
+
+### Get Network Function Status
+
+**Get AMF Configuration:**
 ```bash
 curl http://localhost:5000/restconf/data/open5gs:core/amf
 ```
 
-### Register New Subscriber
+**Get SMF Configuration:**
+```bash
+curl http://localhost:5000/restconf/data/open5gs:core/smf
+```
+
+**Get UPF Configuration:**
+```bash
+curl http://localhost:5000/restconf/data/open5gs:core/upf
+```
+
+### Subscriber Management
+
+**List All Subscribers:**
+```bash
+curl http://localhost:5000/restconf/data/open5gs:subscribers
+```
+
+**Register New Subscriber:**
 ```bash
 curl -X POST http://localhost:5000/restconf/data/open5gs:subscribers \
   -H "Content-Type: application/json" \
-  -d '{"imsi": "310150999888777", "k": "00112233445566778899aabbccddeeff"}'
+  -d '{
+    "imsi": "999700000000001",
+    "msisdn": "821012345678",
+    "k": "465B5CE8B199B49FAA5F0A2EE238A6BC",
+    "opc": "E8ED289DEBA952E4283B54E88E6183CA",
+    "apn": "internet"
+  }'
 ```
 
-### Deregister UE
+**Delete Subscriber:**
+```bash
+curl -X DELETE http://localhost:5000/restconf/data/open5gs:subscribers/subscriber=999700000000001
+```
+
+**Deregister UE:**
 ```bash
 curl -X POST http://localhost:5000/restconf/operations/open5gs:deregister-ue \
   -H "Content-Type: application/json" \
-  -d '{"input": {"imsi": "310150999888777"}}'
+  -d '{"input": {"imsi": "999700000000001"}}'
+```
+
+### Metrics Endpoint
+
+**Get Prometheus Metrics:**
+```bash
+curl http://localhost:5000/metrics
 ```
 
 ## 🛠️ Technology Stack
 
 **Backend:**
-- Python Flask
-- RESTCONF (RFC 8040)
-- NETCONF (RFC 6241)
-- MongoDB
-- YANG Models
+- Python 3.11+ with Flask
+- RESTCONF API (RFC 8040 compliant)
+- Prometheus Client (metrics export)
+- MongoDB support (optional, uses in-memory storage by default)
 
 **Frontend:**
-- React 18
-- Vite
-- Tailwind CSS
-- Lucide Icons
+- HTML5, CSS3, JavaScript (Vanilla)
+- Modern responsive design
+- Real-time data updates
 
-**Infrastructure:**
-- Docker & Docker Compose
-- Nginx
+**Monitoring:**
+- Prometheus (metrics collection)
+- Grafana 10.4.3 (visualization)
+- Docker Compose (container orchestration)
+
+## 📁 Project Structure
+
+```
+End-to-End-5G-Management-Prototype/
+├── backend/
+│   ├── app.py                    # Main Flask application
+│   ├── netconf_server.py         # NETCONF server implementation
+│   ├── requirements.txt          # Python dependencies
+│   └── Dockerfile               # Backend container image
+├── monitoring/
+│   ├── prometheus.yml           # Prometheus configuration
+│   └── grafana-dashboard.json   # Pre-configured Grafana dashboard
+├── dashboard.html               # Main web dashboard
+├── docker-compose-monitoring.yml # Docker Compose for monitoring stack
+├── GRAFANA_SETUP.md            # Grafana setup guide
+└── README.md                   # This file
+```
 
 ## 📚 Documentation
 
-See [FLOWCHART.txt](FLOWCHART.txt) for detailed architecture diagrams.
+- **[GRAFANA_SETUP.md](GRAFANA_SETUP.md)** - Complete Grafana configuration guide
+- **Backend API** - RESTCONF endpoints documentation in code
+- **Prometheus Metrics** - Available at `/metrics` endpoint
 
-## 🎓 Academic Use
+## 🎓 Use Cases
 
-This project is designed for educational and research purposes, demonstrating:
-- 5G core network architecture
-- Network management protocols (RESTCONF/NETCONF)
-- Microservices design patterns
-- Real-time monitoring systems
+This project demonstrates:
+- **5G Core Network Management** - AMF, SMF, UPF configuration and monitoring
+- **RESTCONF Protocol** - RFC 8040 compliant REST API for network management
+- **Subscriber Lifecycle Management** - UE registration, authentication, and deregistration
+- **Real-time Monitoring** - Prometheus metrics and Grafana dashboards
+- **Network Slicing** - Configuration and management of network slices
+- **Microservices Architecture** - Containerized deployment with Docker
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 License
 
-MIT License - See [LICENSE](LICENSE) file for details
+This project is open source and available for educational and research purposes.
 
 ## 👤 Author
 
-Om Shinde
+**Shahrukh**
+- GitHub: [@Shahrukh1003](https://github.com/Shahrukh1003)
+- Repository: [End-to-End-5G-Management-Prototype](https://github.com/Shahrukh1003/End-to-End-5G-Management-Prototype)
 
 ## 🙏 Acknowledgments
 
-- Open5GS Project
-- 3GPP Standards
-- IETF RFC 8040 (RESTCONF)
+- 3GPP Standards for 5G Core Network specifications
+- IETF RFC 8040 (RESTCONF Protocol)
+- Prometheus & Grafana communities
+- Open source contributors
