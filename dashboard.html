@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5G Core Management Dashboard - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        h1 {
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #666;
+        }
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            padding: 12px 24px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+        }
+        @keyframes pulse {
+            0% { 
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            }
+            50% { 
+                opacity: 0.7;
+                box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+            }
+            100% { 
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+            }
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+        .tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .tab:hover::before {
+            left: 100%;
+        }
+        .tab:hover {
+            background: #e8e9eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.18);
+        }
+        .card:hover::before {
+            opacity: 1;
+        }
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            color: #666;
+        }
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .status-active {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+        .status-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+        }
+        .status-error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+        }
+        .load-bar {
+            width: 100%;
+            height: 24px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .load-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent);
+            border-radius: 12px 12px 0 0;
+        }
+        .load-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        .load-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .load-fill.high {
+            background: linear-gradient(90deg, #ff9800, #ff5722);
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        input:hover, textarea:hover, select:hover {
+            border-color: #b0b0b0;
+        }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+            color: #333;
+        }
+        .error, .success, .info {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        .alert-banner {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .alert-banner.alert-critical {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .alert-banner.alert-warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .alert-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logs-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            background: white;
+        }
+        .log-entry.log-info {
+            border-left: 3px solid #17a2b8;
+        }
+        .log-entry.log-warning {
+            border-left: 3px solid #ffc107;
+        }
+        .log-entry.log-error {
+            border-left: 3px solid #dc3545;
+        }
+        .log-time {
+            color: #666;
+            margin-right: 10px;
+        }
+        .log-level {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .log-nf {
+            color: #667eea;
+            margin-right: 10px;
+        }
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .metric-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .big-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .circular-progress {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(#4CAF50 0% 99%, #e0e0e0 99% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px auto;
+            position: relative;
+        }
+        .circular-progress::before {
+            content: '';
+            width: 90px;
+            height: 90px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .circular-progress span {
+            z-index: 1;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .mini-chart {
+            height: 60px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .session-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🚀 5G Core Management System</h1>
+                <p class="subtitle">RESTCONF Control Plane & Network Monitoring - Enhanced Edition</p>
+            </div>
+            <div class="live-indicator">
+                <div class="pulse"></div>
+                <span style="font-weight: bold;">LIVE</span>
+            </div>
+        </div>
+
+        <div id="alert-banner" class="alert-banner" style="display: none;">
+            <div class="alert-content">
+                <span id="alert-icon">⚠️</span>
+                <span id="alert-message"></span>
+            </div>
+            <button onclick="dismissAlert()" style="padding: 5px 15px;">×</button>
+        </div>
+
+        <div id="message"></div>
+        <div id="loading" class="loading">Loading network status...</div>
+
+        <div id="content" style="display: none;">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+                <button class="tab" onclick="switchTab('observability')">📈 Observability</button>
+                <button class="tab" onclick="switchTab('subscribers')">👥 Subscribers</button>
+                <button class="tab" onclick="switchTab('sessions')">📡 Sessions</button>
+                <button class="tab" onclick="switchTab('automation')">🤖 Automation</button>
+                <button class="tab" onclick="switchTab('logs')">📋 Logs</button>
+                <button class="tab" onclick="switchTab('config')">⚙️ Configuration</button>
+            </div>
+
+            <!-- Overview Tab -->
+            <div id="tab-overview" class="tab-content active">
+                <div class="status-grid">
+                    <div class="card">
+                        <h2>📡 AMF Status</h2>
+                        <div class="metric">
+                            <span class="metric-label">Status</span>
+                            <span id="amf-status" class="status-badge status-active">Active</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Load</span>
+                            <span id="amf-load" class="metric-value">0%</span>
+                        </div>
+                        <div class="load-bar">
+                            <div id="amf-load-bar" class="load-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Sessions</span>
+                            <span id="amf-sessions" class="metric-value">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Registered UEs</span>
+                            <span id="amf-ues" class="metric-value">0</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>👥 SMF Status</h2>
+                        <div class="metric">
+                            <span class="metric-label">Status</span>
+                            <span id="smf-status" class="status-badge status-active">Active</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Load</span>
+                            <span id="smf-load" class="metric-value">0%</span>
+                        </div>
+                        <div class="load-bar">
+                            <div id="smf-load-bar" class="load-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">PDU Sessions</span>
+                            <span id="smf-sessions" class="metric-value">0</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>📶 UPF Status</h2>
+                        <div class="metric">
+                            <span class="metric-label">Status</span>
+                            <span id="upf-status" class="status-badge status-active">Active</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Throughput</span>
+                            <span id="upf-throughput" class="metric-value">0 Mbps</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Packets</span>
+                            <span id="upf-packets" class="metric-value">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 System Metrics</h2>
+                    <div class="metrics-row">
+                        <div class="metric-card">
+                            <h3>Network Health</h3>
+                            <div class="big-number" id="health-score">95.0</div>
+                            <p style="color: #666;">Overall Score</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Total UEs</h3>
+                            <div class="big-number" id="total-ues">0</div>
+                            <p style="color: #666;">Registered</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Active Sessions</h3>
+                            <div class="big-number" id="active-sessions">0</div>
+                            <p style="color: #666;">PDU Sessions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observability Tab -->
+            <div id="tab-observability" class="tab-content">
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <h3>SLA Compliance</h3>
+                        <div class="circular-progress" id="sla-progress">
+                            <span id="sla-value">99.5%</span>
+                        </div>
+                        <p style="color: #666;">Target: <span id="sla-target">99.0%</span></p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Latency (P95)</h3>
+                        <div class="big-number" id="latency-value">120ms</div>
+                        <p style="color: #666;">Threshold: 150ms</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Error Rate</h3>
+                        <div class="big-number" id="error-value">0.2%</div>
+                        <p style="color: #666;">Last 5 minutes</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>UPF Throughput</h3>
+                        <div class="big-number" id="obs-throughput">1240</div>
+                        <p style="color: #666;">Mbps</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🚨 Recent Alerts</h2>
+                    <div id="alerts-container">
+                        <p style="color: #666; text-align: center; padding: 20px;">No alerts</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscribers Tab -->
+            <div id="tab-subscribers" class="tab-content">
+                <div class="card">
+                    <h2>📱 Register New Subscriber</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>IMSI</label>
+                            <input type="text" id="imsi-input" placeholder="310150999888777" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label>MSISDN</label>
+                            <input type="text" id="msisdn-input" placeholder="9001000001">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>K</label>
+                            <input type="text" id="k-input" placeholder="00112233445566778899aabbccddeeff" maxlength="32">
+                        </div>
+                        <div class="form-group">
+                            <label>OPC</label>
+                            <input type="text" id="opc-input" placeholder="63bfa50ee6523365ff14c1f45f88737d" maxlength="32">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>DNN</label>
+                            <select id="dnn-input">
+                                <option value="internet">internet</option>
+                                <option value="ims">ims</option>
+                                <option value="mms">mms</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>QoS Index</label>
+                            <select id="qos-input">
+                                <option value="9">9 (Default)</option>
+                                <option value="5">5 (IMS)</option>
+                                <option value="7">7 (Video)</option>
+                                <option value="8">8 (Gaming)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="registerSubscriber()">Register Subscriber</button>
+                        <button class="secondary" onclick="clearForm()">Clear Form</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>📋 Subscriber List</h2>
+                    <div class="button-group" style="margin-bottom: 15px;">
+                        <button onclick="loadSubscribers()">🔄 Refresh</button>
+                        <button class="secondary" onclick="exportSubscribers()">📥 Export CSV</button>
+                        <input type="text" id="search-input" placeholder="Search by IMSI or MSISDN..." style="flex: 1;">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>IMSI</th>
+                                <th>MSISDN</th>
+                                <th>DNN</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscribers-table">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #666;">No subscribers registered</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sessions Tab -->
+            <div id="tab-sessions" class="tab-content">
+                <div class="card">
+                    <h2>📡 PDU Sessions</h2>
+                    <p style="color: #666; margin-bottom: 15px;">Active data sessions between UEs and the network</p>
+                    <div id="sessions-container">
+                        <div class="session-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3 style="margin-bottom: 5px;">PDU-001</h3>
+                                    <p style="color: #666; font-size: 0.9em;">IMSI: 310150999888777</p>
+                                </div>
+                                <span class="badge badge-success">Active</span>
+                            </div>
+                            <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                                <div>
+                                    <p style="color: #666; font-size: 0.85em;">Type</p>
+                                    <p style="font-weight: 600;">IPv4</p>
+                                </div>
+                                <div>
+                                    <p style="color: #666; font-size: 0.85em;">QoS</p>
+                                    <p style="font-weight: 600;">5QI-9</p>
+                                </div>
+                                <div>
+                                    <p style="color: #666; font-size: 0.85em;">UPF</p>
+                                    <p style="font-weight: 600;">UPF-01</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="color: #666; text-align: center; padding: 20px;">Session data will appear here when subscribers are active</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automation Tab -->
+            <div id="tab-automation" class="tab-content">
+                <div class="card">
+                    <h2>🤖 Batch JSON Provisioning</h2>
+                    <p style="color: #666; margin-bottom: 10px;">Register multiple subscribers at once using JSON format</p>
+                    <textarea id="batch-json" rows="10" style="font-family: monospace; font-size: 0.9em;">
+[
+  { "imsi": "310150999888777", "msisdn": "9001000001" },
+  { "imsi": "310150999888778", "msisdn": "9001000002" },
+  { "imsi": "310150999888779", "msisdn": "9001000003" }
+]</textarea>
+                    <div class="button-group">
+                        <button onclick="batchProvision()">📤 Provision Batch</button>
+                        <button class="secondary" onclick="validateJSON()">✓ Validate JSON</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>📁 CSV Import/Export</h2>
+                    <p style="color: #666; margin-bottom: 10px;">Import subscribers from CSV file (columns: imsi, msisdn, k, opc, amf, dnn)</p>
+                    <div class="button-group">
+                        <input type="file" id="csv-file" accept=".csv" style="flex: 1;">
+                        <button onclick="importCSV()">📥 Import CSV</button>
+                        <button class="secondary" onclick="exportSubscribers()">📤 Export CSV</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>🗑️ Bulk Delete</h2>
+                    <p style="color: #666; margin-bottom: 10px;">Delete multiple subscribers by IMSI (comma or newline separated)</p>
+                    <textarea id="delete-imsis" rows="5" placeholder="310150999888777, 310150999888778, 310150999888779"></textarea>
+                    <div class="button-group">
+                        <button class="danger" onclick="bulkDelete()">Delete Multiple</button>
+                        <button class="secondary" onclick="document.getElementById('delete-imsis').value = ''">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Tab -->
+            <div id="tab-logs" class="tab-content">
+                <div class="card">
+                    <h2>📋 System Logs</h2>
+                    <div class="button-group" style="margin-bottom: 15px;">
+                        <select id="log-level-filter" onchange="filterLogs()">
+                            <option value="all">All Levels</option>
+                            <option value="INFO">INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                        </select>
+                        <button onclick="loadLogs()">🔄 Refresh</button>
+                        <button class="secondary" onclick="clearLogsDisplay()">Clear Display</button>
+                    </div>
+                    <div id="logs-container" class="logs-container">
+                        <p style="text-align: center; color: #666;">Loading logs...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Tab -->
+            <div id="tab-config" class="tab-content">
+                <div class="status-grid">
+                    <div class="card">
+                        <h2>⚙️ AMF Configuration</h2>
+                        <div id="amf-config">Loading...</div>
+                    </div>
+                    <div class="card">
+                        <h2>⚙️ SMF Configuration</h2>
+                        <div id="smf-config">Loading...</div>
+                    </div>
+                    <div class="card">
+                        <h2>⚙️ UPF Configuration</h2>
+                        <div id="upf-config">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let allSubscribers = [];
+        let allLogs = [];
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Load data for specific tabs
+            if (tabName === 'logs') loadLogs();
+            if (tabName === 'config') loadConfigurations();
+            if (tabName === 'observability') loadObservability();
+        }
+
+        // Alert functions
+        function showAlert(message, severity = 'warning') {
+            const banner = document.getElementById('alert-banner');
+            const icon = document.getElementById('alert-icon');
+            const msg = document.getElementById('alert-message');
+            
+            icon.textContent = severity === 'critical' ? '🚨' : '⚠️';
+            msg.textContent = message;
+            banner.style.display = 'flex';
+            banner.className = `alert-banner alert-${severity}`;
+        }
+
+        function dismissAlert() {
+            document.getElementById('alert-banner').style.display = 'none';
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Fetch metrics
+        async function fetchMetrics() {
+            try {
+                const response = await fetch(`${API_BASE}/api/metrics`);
+                if (!response.ok) throw new Error('Failed to fetch metrics');
+                const data = await response.json();
+
+                // Update AMF
+                document.getElementById('amf-status').textContent = data.amf.status;
+                document.getElementById('amf-load').textContent = Math.round(data.amf.load) + '%';
+                document.getElementById('amf-load-bar').style.width = data.amf.load + '%';
+                document.getElementById('amf-load-bar').className = data.amf.load > 80 ? 'load-fill high' : 'load-fill';
+                document.getElementById('amf-sessions').textContent = data.amf.sessions;
+                document.getElementById('amf-ues').textContent = data.amf.registered_ues;
+
+                // Update SMF
+                document.getElementById('smf-status').textContent = data.smf.status;
+                document.getElementById('smf-load').textContent = Math.round(data.smf.load) + '%';
+                document.getElementById('smf-load-bar').style.width = data.smf.load + '%';
+                document.getElementById('smf-load-bar').className = data.smf.load > 80 ? 'load-fill high' : 'load-fill';
+                document.getElementById('smf-sessions').textContent = data.smf.pdu_sessions;
+
+                // Update UPF
+                document.getElementById('upf-status').textContent = data.upf.status;
+                document.getElementById('upf-throughput').textContent = Math.round(data.upf.throughput) + ' Mbps';
+                document.getElementById('upf-packets').textContent = data.upf.packets.toLocaleString();
+
+                // Update overview metrics
+                document.getElementById('total-ues').textContent = data.amf.registered_ues;
+                document.getElementById('active-sessions').textContent = data.smf.pdu_sessions;
+                
+                const healthScore = Math.max(90, 100 - Math.max(data.amf.load, data.smf.load) * 0.25).toFixed(1);
+                document.getElementById('health-score').textContent = healthScore;
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Load subscribers
+        async function loadSubscribers() {
+            try {
+                const response = await fetch(`${API_BASE}/api/subscribers`);
+                if (!response.ok) throw new Error('Failed to load subscribers');
+                const data = await response.json();
+                
+                allSubscribers = data.subscribers || [];
+                displaySubscribers(allSubscribers);
+            } catch (error) {
+                showMessage('Error loading subscribers: ' + error.message, 'error');
+            }
+        }
+
+        function displaySubscribers(subscribers) {
+            const tbody = document.getElementById('subscribers-table');
+            if (subscribers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666;">No subscribers registered</td></tr>';
+            } else {
+                tbody.innerHTML = subscribers.map(sub => {
+                    const dnn = sub.slice && sub.slice[0] && sub.slice[0].session && sub.slice[0].session[0] 
+                        ? sub.slice[0].session[0].name : 'N/A';
+                    return `
+                        <tr>
+                            <td>${sub.imsi}</td>
+                            <td>${sub.msisdn || 'N/A'}</td>
+                            <td>${dnn}</td>
+                            <td><span class="status-badge status-active">Active</span></td>
+                            <td>
+                                <button onclick="viewSubscriber('${sub.imsi}')" style="padding: 5px 10px; font-size: 0.9em;">View</button>
+                                <button class="danger" onclick="deleteSubscriber('${sub.imsi}')" style="padding: 5px 10px; font-size: 0.9em;">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Search subscribers
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.toLowerCase();
+                    const filtered = allSubscribers.filter(sub => 
+                        sub.imsi.toLowerCase().includes(query) || 
+                        (sub.msisdn && sub.msisdn.toLowerCase().includes(query))
+                    );
+                    displaySubscribers(filtered);
+                });
+            }
+        });
+
+        // Register subscriber
+        async function registerSubscriber() {
+            const imsi = document.getElementById('imsi-input').value.trim();
+            const msisdn = document.getElementById('msisdn-input').value.trim();
+            const k = document.getElementById('k-input').value.trim();
+            const opc = document.getElementById('opc-input').value.trim();
+            const dnn = document.getElementById('dnn-input').value;
+            const qos = document.getElementById('qos-input').value;
+
+            if (imsi.length !== 15) {
+                showMessage('IMSI must be exactly 15 digits', 'error');
+                return;
+            }
+
+            const body = { imsi, msisdn, dnn };
+            if (k) body.k = k;
+            if (opc) body.opc = opc;
+            if (qos) body.qos = { index: parseInt(qos) };
+
+            try {
+                const response = await fetch(`${API_BASE}/restconf/data/open5gs:subscribers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) throw new Error('Failed to register subscriber');
+                
+                showMessage('Subscriber registered successfully!', 'success');
+                clearForm();
+                loadSubscribers();
+                fetchMetrics();
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('imsi-input').value = '';
+            document.getElementById('msisdn-input').value = '';
+            document.getElementById('k-input').value = '';
+            document.getElementById('opc-input').value = '';
+            document.getElementById('dnn-input').value = 'internet';
+            document.getElementById('qos-input').value = '9';
+        }
+
+        async function deleteSubscriber(imsi) {
+            if (!confirm(`Delete subscriber ${imsi}?`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/restconf/data/open5gs:subscribers/subscriber=${imsi}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to delete subscriber');
+                
+                showMessage('Subscriber deleted successfully!', 'success');
+                loadSubscribers();
+                fetchMetrics();
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        function viewSubscriber(imsi) {
+            const sub = allSubscribers.find(s => s.imsi === imsi);
+            if (sub) {
+                alert(JSON.stringify(sub, null, 2));
+            }
+        }
+
+        // Automation functions
+        function validateJSON() {
+            const json = document.getElementById('batch-json').value;
+            try {
+                JSON.parse(json);
+                showMessage('JSON is valid!', 'success');
+            } catch (error) {
+                showMessage('Invalid JSON: ' + error.message, 'error');
+            }
+        }
+
+        async function batchProvision() {
+            const json = document.getElementById('batch-json').value;
+            try {
+                const subscribers = JSON.parse(json);
+                if (!Array.isArray(subscribers)) {
+                    throw new Error('JSON must be an array of subscribers');
+                }
+
+                const response = await fetch(`${API_BASE}/api/subscribers/batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscribers })
+                });
+
+                if (!response.ok) throw new Error('Batch provisioning failed');
+                const result = await response.json();
+                
+                showMessage(`Provisioned ${result.created}/${result.processed} subscribers`, 'success');
+                loadSubscribers();
+                fetchMetrics();
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function importCSV() {
+            const fileInput = document.getElementById('csv-file');
+            if (!fileInput.files[0]) {
+                showMessage('Please select a CSV file', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/subscribers/import`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('CSV import failed');
+                const result = await response.json();
+                
+                showMessage(`Imported ${result.created} subscribers from ${result.rows} rows`, 'success');
+                fileInput.value = '';
+                loadSubscribers();
+                fetchMetrics();
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function exportSubscribers() {
+            try {
+                const response = await fetch(`${API_BASE}/api/subscribers/export`);
+                if (!response.ok) throw new Error('Export failed');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'subscribers.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                
+                showMessage('Export ready!', 'success');
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function bulkDelete() {
+            const imsis = document.getElementById('delete-imsis').value
+                .split(/[\s,]+/)
+                .map(v => v.trim())
+                .filter(Boolean);
+
+            if (imsis.length === 0) {
+                showMessage('Please enter at least one IMSI', 'error');
+                return;
+            }
+
+            if (!confirm(`Delete ${imsis.length} subscribers?`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/subscribers/batch-delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imsis })
+                });
+
+                if (!response.ok) throw new Error('Bulk delete failed');
+                const result = await response.json();
+                
+                showMessage(`Deleted ${result.deleted} subscribers`, 'success');
+                document.getElementById('delete-imsis').value = '';
+                loadSubscribers();
+                fetchMetrics();
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Logs functions
+        async function loadLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/api/logs`);
+                if (!response.ok) throw new Error('Failed to load logs');
+                allLogs = await response.json();
+                displayLogs(allLogs);
+            } catch (error) {
+                document.getElementById('logs-container').innerHTML = 
+                    `<p style="color: #dc3545; text-align: center;">Error loading logs: ${error.message}</p>`;
+            }
+        }
+
+        function displayLogs(logs) {
+            const container = document.getElementById('logs-container');
+            if (logs.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No logs available</p>';
+                return;
+            }
+            container.innerHTML = logs.map(log => `
+                <div class="log-entry log-${log.level.toLowerCase()}">
+                    <span class="log-time">${log.time}</span>
+                    <span class="log-level">${log.level}</span>
+                    <span class="log-nf">${log.nf}</span>
+                    <span class="log-message">${log.message}</span>
+                </div>
+            `).join('');
+        }
+
+        function filterLogs() {
+            const level = document.getElementById('log-level-filter').value;
+            if (level === 'all') {
+                displayLogs(allLogs);
+            } else {
+                displayLogs(allLogs.filter(log => log.level === level));
+            }
+        }
+
+        function clearLogsDisplay() {
+            document.getElementById('logs-container').innerHTML = 
+                '<p style="text-align: center; color: #666;">Logs cleared</p>';
+        }
+
+        // Observability functions
+        async function loadObservability() {
+            try {
+                const response = await fetch(`${API_BASE}/api/alerts`);
+                if (!response.ok) throw new Error('Failed to load alerts');
+                const data = await response.json();
+
+                // Update SLA
+                const slaValue = data.sla_estimate_percent || 99.5;
+                document.getElementById('sla-value').textContent = slaValue.toFixed(1) + '%';
+                document.getElementById('sla-target').textContent = data.config.sla_target + '%';
+                
+                // Update circular progress
+                const progress = document.getElementById('sla-progress');
+                const percentage = slaValue;
+                progress.style.background = `conic-gradient(${percentage >= data.config.sla_target ? '#4CAF50' : '#ffc107'} 0% ${percentage}%, #e0e0e0 ${percentage}% 100%)`;
+
+                // Update latency
+                document.getElementById('latency-value').textContent = Math.round(data.latency_estimate_ms) + 'ms';
+
+                // Update error rate (simulated)
+                const errorRate = ((100 - slaValue) / 10).toFixed(2);
+                document.getElementById('error-value').textContent = errorRate + '%';
+
+                // Update throughput
+                const metrics = await fetch(`${API_BASE}/api/metrics`).then(r => r.json());
+                document.getElementById('obs-throughput').textContent = Math.round(metrics.upf.throughput);
+
+                // Display alerts
+                const alertsContainer = document.getElementById('alerts-container');
+                if (data.alerts && data.alerts.length > 0) {
+                    alertsContainer.innerHTML = data.alerts.slice(0, 10).map(alert => `
+                        <div class="log-entry log-${alert.severity}">
+                            <span class="log-time">${alert.timestamp}</span>
+                            <span class="log-level">${alert.severity.toUpperCase()}</span>
+                            <span class="log-nf">${alert.type}</span>
+                            <span class="log-message">${alert.message}</span>
+                        </div>
+                    `).join('');
+
+                    // Show banner for latest critical alert
+                    const latestCritical = data.alerts.find(a => a.severity === 'critical');
+                    if (latestCritical) {
+                        showAlert(latestCritical.message, 'critical');
+                    }
+                } else {
+                    alertsContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No alerts</p>';
+                }
+            } catch (error) {
+                console.error('Error loading observability data:', error);
+            }
+        }
+
+        // Configuration functions
+        async function loadConfigurations() {
+            try {
+                const [amfRes, smfRes, upfRes] = await Promise.all([
+                    fetch(`${API_BASE}/restconf/data/open5gs:core/amf`),
+                    fetch(`${API_BASE}/restconf/data/open5gs:core/smf`),
+                    fetch(`${API_BASE}/restconf/data/open5gs:core/upf`)
+                ]);
+
+                const amf = await amfRes.json();
+                const smf = await smfRes.json();
+                const upf = await upfRes.json();
+
+                document.getElementById('amf-config').innerHTML = `<pre style="font-size: 0.85em; overflow-x: auto;">${JSON.stringify(amf, null, 2)}</pre>`;
+                document.getElementById('smf-config').innerHTML = `<pre style="font-size: 0.85em; overflow-x: auto;">${JSON.stringify(smf, null, 2)}</pre>`;
+                document.getElementById('upf-config').innerHTML = `<pre style="font-size: 0.85em; overflow-x: auto;">${JSON.stringify(upf, null, 2)}</pre>`;
+            } catch (error) {
+                console.error('Error loading configurations:', error);
+            }
+        }
+
+        // Initial load
+        fetchMetrics();
+        loadSubscribers();
+
+        // Refresh every 5 seconds
+        setInterval(fetchMetrics, 5000);
+        setInterval(() => {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab && activeTab.id === 'tab-observability') {
+                loadObservability();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

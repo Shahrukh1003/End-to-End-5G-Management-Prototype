@@ -1,0 +1,94 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: 5gc-mongodb
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - 5g-core-net
+
+  open5gs-core:
+    image: openverso/open5gs:2.7.0
+    container_name: 5gc-open5gs
+    privileged: true
+    ports:
+      - "3000:3000"  # WebUI
+      - "7777:7777"  # AMF NGAP
+    volumes:
+      - ./open5gs/open5gs.yml:/etc/open5gs/open5gs.yml
+    depends_on:
+      - mongodb
+    networks:
+      - 5g-core-net
+    environment:
+      - DB_URI=mongodb://mongodb:27017/open5gs
+
+  netconf-backend:
+    build: ./backend
+    container_name: 5gc-netconf-backend
+    ports:
+      - "5000:5000"   # Flask REST API
+      - "8080:8080"   # RESTCONF
+      - "830:830"     # NETCONF SSH
+    depends_on:
+      - open5gs-core
+      - mongodb
+    networks:
+      - 5g-core-net
+    environment:
+      - OPEN5GS_HOST=open5gs-core
+      - MONGO_URI=mongodb://mongodb:27017/open5gs
+      - PYTHONUNBUFFERED=1
+      - SLA_TARGET=99.0
+      - LATENCY_THRESHOLD_MS=150
+      - LOAD_THRESHOLD_PERCENT=80
+      - ALERT_COOLDOWN_SECONDS=120
+      # Set ALERT_WEBHOOK_URL in a .env file to forward alerts externally
+
+  dashboard:
+    build: ./frontend
+    container_name: 5gc-dashboard
+    ports:
+      - "3001:80"
+    depends_on:
+      - netconf-backend
+    networks:
+      - 5g-core-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: 5gc-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - netconf-backend
+    networks:
+      - 5g-core-net
+
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: 5gc-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3002:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - 5g-core-net
+
+networks:
+  5g-core-net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  grafana_data:
